@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<!-- todo in this version
+  write independent "draw" function called from ready() and called when dropdown is selected
+-->
+
+<head>
+
+  <meta charset="utf-8">
+
+  <title>Arlington Real Estate Price Appreciation</title>
+
+  <script src="https://d3js.org/d3.v5.js"></script>
+  <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+  <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
+  <script type="text/javascript" src="../lib/d3-legend.min.js"></script>
+  <script type="text/javascript" src="../lib/d3-tip.min.js"></script>
+
+  <style>
+
+    #drop_down {
+      position: absolute;
+      top: 30px;
+      left: 30px;
+    }
+
+    .d3-tip {
+      line-height: 1;
+      font-weight: bold;
+      padding: 12px;
+      background: rgba(0,0,0,.8);
+      color: #fff;
+      border-radius: 2px;
+    }
+  </style>
+
+</head>
+
+<body>
+
+<select id="drop_down"></select>
+
+<script>
+
+  var width = 960;
+  var height = 500;
+  var margin = {top: 50, right: 50, bottom: 50, left: 50};
+  var plot_variable = "pch_1y";
+  var selected_variable;
+  var error;
+  //plot_variable = "2022-11-30";
+
+  var choropleth = d3.select("body").append("svg")
+      .attr("id","choropleth")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .attr('transform',"translate("+margin.left+","+margin.top+")");
+
+  let title_string = "Home Price Appreciation in Arlington"
+  let subtitle_string = "Data as of November 2022. Source: Zillow*"
+  let footnote_string = "* Percentage change in Zillow Home Value Index, a measure of typical home value (https://www.zillow.com/research/data/)"
+
+   d3.select("#choropleth")
+      .append("text")
+      .attr("id","title")
+      .text(title_string)
+      .attr("text-anchor","middle")
+      .attr('transform',"translate("+(width*2/3)+","+margin.top+")");
+
+  d3.select("#choropleth")
+      .append("text")
+      .attr("id","subtitle")
+      .text(subtitle_string)
+      .attr("text-anchor","middle")
+      .attr('transform',"translate("+(width*2/3)+","+margin.top*1.5+")");
+
+  d3.select("#choropleth")
+      .append("text")
+      .attr("id","footnote")
+      .text(footnote_string)
+      .attr("text-anchor","middle")
+      .attr('transform',"translate("+(width*2/3)+","+(height+margin.bottom*1.5)+")");
+
+  d3.select("#choropleth")
+      .append("g")
+      .attr("id","zipcode_paths")
+      .attr('transform',"translate("+(margin.left)+","+margin.top+")");
+
+   d3.select("#choropleth")
+      .append("g")
+      .attr("id","legend")
+      .attr('transform',"translate("+(width-2*margin.right)+","+margin.top+")");
+
+   var color = d3.scaleQuantize()
+      .range(["rgb(237,248,233","rgb(186,228,179","rgb(116,196,118)","rgb(49,163,84)","rgb(0,109,44)"]);
+
+
+    var legend = d3.legendColor()
+      .labelFormat(d3.format(".2f"))
+      .scale(color);
+
+    function set_color_domain(data,plot_variable) {
+      color.domain([
+        d3.min(data,function(d){return +d[plot_variable];}),
+        d3.max(data,function(d){return +d[plot_variable];})
+      ]);
+    };
+
+    // set up tooltip
+
+    var tip = d3.tip()
+      .attr("title", "Zip Code Data")
+      .attr("class","d3-tip")
+      .attr("id","tooltip")
+      .offset([-10,0])
+      .html(function (d) {
+        if(typeof(d.properties.zillow_data) !='undefined') {
+          return "<span>Zip: "+d.properties.ZCTA5CE10+
+            "<br>Data: "+d.properties.zillow_data+
+                 "</span>"
+        }
+        else {
+          return "<span>Zip: "+d.properties.ZCTA5CE10+
+            "<br>Data: N/A </span>"
+        }
+      });
+
+  d3.select("#choropleth")
+    .call(tip);
+
+  //functions to read in data
+
+   var zillow = d3.csv("data/zillow_pricedata_byzip_arl_only_subset.csv?"+Math.random())
+      .then(function(data){
+        set_color_domain(data,plot_variable);
+        return data;
+    });
+
+   var zipcodes = d3.json("data/arl_zips.json").then(function(data){
+      return data});
+
+   // load the data then call ready()
+
+  Promise.all([zipcodes,zillow])
+      .then(([zipcodes,zillow]) => {ready(error,zipcodes,zillow)})
+    .catch((error) => {
+      console.log("error on promise ==>");
+      console.log(error.message);
+    });
+
+  function ready(error,zipcodes, zillow) {
+      console.log("ready");
+
+      // menu choices for dropdown
+
+      var zillow_keys = Object.keys(zillow[0]);
+      var var_names = zillow_keys.slice(1,zillow_keys.length);
+      console.log(var_names);
+
+      // projection functions
+
+      var projection = d3.geoAlbers()
+        .rotate([0,68])
+       .fitSize([width,height],zipcodes);
+
+      var path = d3.geoPath(projection);
+
+      // draw the initial map
+
+      plot_variable = var_names[0];
+
+      draw_map(zillow,zipcodes,update=false);
+
+      // set up the dropdown menu
+
+      var select = document.getElementById("drop_down");
+
+      for (var i = 0; i < var_names.length; i++){
+        var opt = var_names[i];
+        var el = document.createElement("option");
+        el.text = opt;
+        el.value = opt;
+        select.add(el);
+      }
+
+      select.addEventListener("change",function handleChange(event){
+        console.log(event.target.value);
+        selected_variable = event.target.value;
+        plot_variable = selected_variable;
+        draw_map(zillow,zipcodes,update=true);
+    });
+
+
+
+
+  function draw_map(zillow,zipcodes,update){
+    //bind data to zips
+      for (var i = 0; i < zillow.length; i++) {
+        var zillow_zip = zillow[i].RegionName;
+        var zillow_zip_data = zillow[i][plot_variable];
+
+        for (var j = 0; j < zipcodes.features.length; j++) {
+          var va_zip = zipcodes.features[j].properties.ZCTA5CE10;
+          if (va_zip === zillow_zip) {
+            zipcodes.features[j].properties.zillow_data = zillow_zip_data;
+          }
+        }
+
+      }
+    // set color domain
+     set_color_domain(zillow,plot_variable);
+
+    // draw legend
+     d3.select("#legend")
+       .call(legend);
+
+  // if first time thru: append paths etc
+
+    if (!update) {
+      d3.select("#zipcode_paths").selectAll("path")
+        .data(zipcodes.features)
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .style("stroke","#636363")
+        .style("stroke-width","2px")
+        .style("fill", function (d) {
+          var value = d.properties.zillow_data;
+          if (value) {
+            return color(value);
+          } else {
+            return "#ccc";
+          }
+        })
+        .on("mouseover", tip.show)
+        .on("mouseout", tip.hide);
+    };
+
+    if (update) {
+      d3.select("#zipcode_paths").selectAll("path")
+        .data(zipcodes.features)
+        .style("fill", function (d) {
+          var value = d.properties.zillow_data;
+          if (value) {
+            return color(value);
+          } else {
+            return "#ccc";
+          }
+        })
+        .on("mouseover", tip.show)
+        .on("mouseout", tip.hide);
+
+    }
+
+    zip_labels(zipcodes);
+
+      };
+
+  function zip_labels (zipcodes) {
+    d3.select("#zipcode_paths")
+      .selectAll("text")
+      .data(zipcodes.features)
+      .enter()
+      .append("text")
+      .attr("x", function(d){return path.centroid(d)[0];})
+      .attr("y", function(d){return path.centroid(d)[1];})
+      .text(function(d) { return d.properties.ZCTA5CE10;})
+      .attr('text-anchor','middle')
+      .attr("transform","translate(-0,15)")
+      .attr("font-size","10px");
+
+  };
+
+  }
+
+</script>
+
+</body>
