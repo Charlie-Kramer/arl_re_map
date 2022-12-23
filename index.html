@@ -12,8 +12,8 @@
   <script src="https://d3js.org/d3.v5.js"></script>
   <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
   <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
-  <script type="text/javascript" src="../lib/d3-legend.min.js"></script>
-  <script type="text/javascript" src="../lib/d3-tip.min.js"></script>
+  <script type="text/javascript" src="lib/d3-legend.min.js"></script>
+  <script type="text/javascript" src="lib/d3-tip.min.js"></script>
 
   <style>
 
@@ -41,15 +41,14 @@
 
 <script>
 
-  var width = 960;
-  var height = 500;
-  var margin = {top: 50, right: 50, bottom: 50, left: 50};
-  var plot_variable = "pch_1y";
-  var selected_variable;
-  var error;
-  //plot_variable = "2022-11-30";
+  let width = 960;
+  let height = 500;
+  let margin = {top: 50, right: 50, bottom: 50, left: 50};
+  let plot_variable = "pch_1y";
+  let selected_variable;
+  let error;
 
-  var choropleth = d3.select("body").append("svg")
+  let choropleth = d3.select("body").append("svg")
       .attr("id","choropleth")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
@@ -90,11 +89,10 @@
       .attr("id","legend")
       .attr('transform',"translate("+(width-2*margin.right)+","+margin.top+")");
 
-   var color = d3.scaleQuantize()
+   let color = d3.scaleQuantize()
       .range(["rgb(237,248,233","rgb(186,228,179","rgb(116,196,118)","rgb(49,163,84)","rgb(0,109,44)"]);
 
-
-    var legend = d3.legendColor()
+    let legend = d3.legendColor()
       .labelFormat(d3.format(".2f"))
       .scale(color);
 
@@ -107,7 +105,7 @@
 
     // set up tooltip
 
-    var tip = d3.tip()
+    let tip = d3.tip()
       .attr("title", "Zip Code Data")
       .attr("class","d3-tip")
       .attr("id","tooltip")
@@ -129,13 +127,13 @@
 
   //functions to read in data
 
-   var zillow = d3.csv("data/zillow_pricedata_byzip_arl_only_subset.csv?"+Math.random())
+   let zillow = d3.csv("data/zillow_pricedata_byzip_arl_only_subset.csv?"+Math.random())
       .then(function(data){
         set_color_domain(data,plot_variable);
         return data;
     });
 
-   var zipcodes = d3.json("data/arl_zips.json").then(function(data){
+   let zipcodes = d3.json("data/arl_zips.json").then(function(data){
       return data});
 
    // load the data then call ready()
@@ -152,17 +150,17 @@
 
       // menu choices for dropdown
 
-      var zillow_keys = Object.keys(zillow[0]);
-      var var_names = zillow_keys.slice(1,zillow_keys.length);
+      let zillow_keys = Object.keys(zillow[0]);
+      let var_names = zillow_keys.slice(1,zillow_keys.length);
       console.log(var_names);
 
       // projection functions
 
-      var projection = d3.geoAlbers()
+      let projection = d3.geoAlbers()
         .rotate([0,68])
        .fitSize([width,height],zipcodes);
 
-      var path = d3.geoPath(projection);
+      let path = d3.geoPath(projection);
 
       // draw the initial map
 
@@ -172,11 +170,11 @@
 
       // set up the dropdown menu
 
-      var select = document.getElementById("drop_down");
+      let select = document.getElementById("drop_down");
 
-      for (var i = 0; i < var_names.length; i++){
-        var opt = var_names[i];
-        var el = document.createElement("option");
+      for (let i = 0; i < var_names.length; i++){
+        let opt = var_names[i];
+        let el = document.createElement("option");
         el.text = opt;
         el.value = opt;
         select.add(el);
@@ -189,27 +187,27 @@
         draw_map(zillow,zipcodes,update=true);
     });
 
-
-
-
   function draw_map(zillow,zipcodes,update){
     //bind data to zips
-      for (var i = 0; i < zillow.length; i++) {
-        var zillow_zip = zillow[i].RegionName;
-        var zillow_zip_data = zillow[i][plot_variable];
+      for (let i = 0; i < zillow.length; i++) {
+        let zillow_zip = zillow[i].RegionName;
+        let zillow_zip_data = zillow[i][plot_variable];
 
-        for (var j = 0; j < zipcodes.features.length; j++) {
-          var va_zip = zipcodes.features[j].properties.ZCTA5CE10;
+        for (let j = 0; j < zipcodes.features.length; j++) {
+          let va_zip = zipcodes.features[j].properties.ZCTA5CE10;
           if (va_zip === zillow_zip) {
             zipcodes.features[j].properties.zillow_data = zillow_zip_data;
           }
         }
 
       }
+
     // set color domain
+
      set_color_domain(zillow,plot_variable);
 
     // draw legend
+
      d3.select("#legend")
        .call(legend);
 
@@ -224,7 +222,7 @@
         .style("stroke","#636363")
         .style("stroke-width","2px")
         .style("fill", function (d) {
-          var value = d.properties.zillow_data;
+          let value = d.properties.zillow_data;
           if (value) {
             return color(value);
           } else {
@@ -239,7 +237,7 @@
       d3.select("#zipcode_paths").selectAll("path")
         .data(zipcodes.features)
         .style("fill", function (d) {
-          var value = d.properties.zillow_data;
+          let value = d.properties.zillow_data;
           if (value) {
             return color(value);
           } else {
@@ -271,6 +269,7 @@
   };
 
   }
+
 
 </script>
 
