@@ -54,9 +54,9 @@
       .attr("height", height + margin.top + margin.bottom)
       .attr('transform',"translate("+margin.left+","+margin.top+")");
 
-  let title_string = "Home Price Appreciation in Arlington"
-  let subtitle_string = "Latest observation is November 2022. Source: Zillow*"
-  let footnote_string = "* Percentage change in Zillow Home Value Index, a measure of typical home value (https://www.zillow.com/research/data/)"
+  let title_string = "Home Price Appreciation in Arlington";
+  let subtitle_string = "Latest observation is November 2022. Source: Zillow*";
+  let footnote_string = "* Percentage change in Zillow Home Value Index, a measure of typical home value (https://www.zillow.com/research/data/)";
 
    d3.select("#choropleth")
       .append("text")
@@ -71,6 +71,16 @@
       .text(subtitle_string)
       .attr("text-anchor","middle")
       .attr('transform',"translate("+(width*2/3)+","+margin.top*1.5+")");
+
+    d3.select("#choropleth")
+      .append("a")
+      .attr("id","linkback")
+      .attr("xlink:href","https://github.com/Charlie-Kramer/arl_re_map")
+      .append("text")
+      .text("Back to Code")
+            .style("fill","blue")
+      .attr("text-anchor","middle")
+      .attr('transform',"translate("+(width*2/3)+","+margin.top*2+")");
 
   d3.select("#choropleth")
       .append("text")
