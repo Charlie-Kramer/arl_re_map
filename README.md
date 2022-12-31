@@ -10,4 +10,6 @@ Zillow provides two low-level groupings for real estate data: neighborhood and Z
 
 I filtered GeoJSON data for Virginia ZIP codes to include only Arlington, then similarly filtered the Zillow data and computed percentage changes (see the Jupyter Notebook file). The d3/JavaScript code joins the location and real estate data and binds it to the SVG, with a pull-down menu in the upper left to choose the time horizon.
 
+Note that ZIP code 22211 represents the Ft. Myer military base, hence the lack of price data (I include it on the map to provide a familiar view to people knowledgeable about Arlington County).
+
 See the visualization [here:](https://charlie-kramer.github.io/arl_re_map/)
